@@ -14,11 +14,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 export default function CreateNote() {
+  const router = useRouter();
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleAddTag = () => {
     if (tagInput.trim()) {
@@ -30,8 +35,23 @@ export default function CreateNote() {
   const handleRemoveTag = (index: number) => {
     setTags(tags.filter((_, i) => i !== index));
   };
+
+  const clientAction = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        await postData(formData);
+        setOpen(false);
+        setTags([]);
+        setTagInput("");
+        router.refresh();
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    });
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="w-full md:w-56">Create New Note</Button>
       </DialogTrigger>
@@ -42,7 +62,7 @@ export default function CreateNote() {
             Add a title and details for your new note.
           </DialogDescription>
         </DialogHeader>
-        <form action={postData} className="flex flex-col gap-4">
+        <form action={clientAction} className="flex flex-col gap-4">
           <div>
             <Label>Title</Label>
             <Input name="title" type="text" required className="mt-2" />
@@ -55,7 +75,6 @@ export default function CreateNote() {
                 placeholder="Add tags to organize and categorize your note"
                 className="w-full"
                 value={tagInput}
-                required
                 onChange={(e) => setTagInput(e.target.value.toLowerCase())}
               />
               <Button type="button" onClick={handleAddTag} className="flex-1">
@@ -89,7 +108,15 @@ export default function CreateNote() {
           <input type="hidden" name="tags" value={JSON.stringify(tags)} />
 
           <DialogFooter>
-            <SubmitButton />
+            {isPending ? (
+              <Button disabled className="w-fit">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please Wait
+              </Button>
+            ) : (
+              <Button className="w-fit" type="submit">
+                Create Note
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

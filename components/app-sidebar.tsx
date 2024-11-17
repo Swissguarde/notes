@@ -93,10 +93,13 @@ export async function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="my-2 flex w-full items-center justify-between">
+        <Link
+          href="/settings"
+          className="my-2 flex w-full items-center justify-between"
+        >
           <h2>Settings</h2>
           <Settings />
-        </div>
+        </Link>
       </SidebarFooter>
     </Sidebar>
   );
